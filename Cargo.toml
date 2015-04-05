@@ -1,0 +1,5 @@
+[package]
+name = "flat_map"
+version = "0.0.1"
+authors = ["Jason Toffaletti <toffaletti@gmail.com>"]
+license = "Apache-2.0"
