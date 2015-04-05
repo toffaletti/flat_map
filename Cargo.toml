@@ -2,10 +2,17 @@
 name = "flat_map"
 version = "0.0.1"
 authors = ["Jason Toffaletti <toffaletti@gmail.com>"]
-description = "A compact map using a shorted vector of (key, value)"
+description = "A compact map stored as a vector of key, value pairs."
 license = "Apache-2.0"
 repository = "https://github.com/toffaletti/flat_map.git"
 readme = "README.md"
+
+include = [
+    "src/*.rs",
+    "test/*.rs",
+    "Cargo.toml",
+    "README.md",
+]
 
 [lib]
 name = "flat_map"
