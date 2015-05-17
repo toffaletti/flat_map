@@ -102,6 +102,32 @@ impl <K: Ord, V> FlatMap<K, V> {
         }
     }
 
+	/// Return Option<&mut V>.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flat_map::FlatMap;
+    ///
+    /// let mut m = FlatMap::new(); 
+    /// m.insert(1, "foo".to_string());
+   	/// m.get_mut(&1).unwrap().push_str("bar");
+	/// assert_eq!("foobar", m.get_mut(&1).unwrap()); 
+	/// ```
+	pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
+		match self.v[..].binary_search_by(|&(ref k, _)| { k.cmp(&key) }) {
+			Err(_) => None,
+			Ok(idx) => {
+				match self.v.get_mut(idx) {
+					 Some(&mut (_, ref mut v)) => Some(v),
+					 _ => None,
+				}
+				
+			}
+		}
+		
+	}
+
     pub fn contains_key(&self, key: &K) -> bool {
         self.get(key).is_some()
     }
