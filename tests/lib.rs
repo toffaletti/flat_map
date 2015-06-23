@@ -74,3 +74,10 @@ fn it_works() {
 	assert_eq!("tada", m.get_mut(&2).unwrap()); 	
   	
 }
+
+#[test]
+fn borrow() {
+    let mut m: FlatMap<String,String> = FlatMap::new();
+    m.insert("Key".to_string(), "Value".to_string());
+    assert_eq!(m.get("Key"), Some(&"Value".to_string()));
+}
