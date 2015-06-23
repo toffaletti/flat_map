@@ -34,7 +34,7 @@ fn it_works() {
     m.insert(2, 2);
     assert_eq!(m.iter().count(), 3);
     {
-    	let it = m.iter();
+    	let mut it = m.iter();
     	it.next();
     	assert_eq!(it.count(), 2);
     }
