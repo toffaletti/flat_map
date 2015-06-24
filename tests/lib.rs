@@ -34,7 +34,7 @@ fn it_works() {
     m.insert(2, 2);
     assert_eq!(m.iter().count(), 3);
     {
-    	let it = m.iter();
+    	let mut it = m.iter();
     	it.next();
     	assert_eq!(it.count(), 2);
     }
@@ -73,4 +73,11 @@ fn it_works() {
 	assert_eq!("foobar", m.get_mut(&1).unwrap());
 	assert_eq!("tada", m.get_mut(&2).unwrap()); 	
   	
+}
+
+#[test]
+fn borrow() {
+    let mut m: FlatMap<String,String> = FlatMap::new();
+    m.insert("Key".to_string(), "Value".to_string());
+    assert_eq!(m.get("Key"), Some(&"Value".to_string()));
 }

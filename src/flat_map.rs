@@ -2,6 +2,7 @@ use self::Entry::*;
 
 use std::slice;
 use std::mem::swap;
+use std::borrow::Borrow;
 
 pub struct FlatMap<K, V> {
     v: Vec<(K, V)>,
@@ -92,8 +93,10 @@ impl <K: Ord, V> FlatMap<K, V> {
         }
     }
 
-    pub fn get(&self, key: &K) -> Option<&V> {
-        match self.v[..].binary_search_by(|&(ref k, _)| { k.cmp(&key) }) {
+    pub fn get<Q: ?Sized>(&self, q: &Q) -> Option<&V>
+        where K: Borrow<Q>, Q: Ord
+    {
+        match self.v[..].binary_search_by(|&(ref k, _)| { k.borrow().cmp(&q) }) {
             Err(_) => None,
             Ok(idx) => {
                 let (_, ref v) = self.v[idx];
@@ -109,25 +112,29 @@ impl <K: Ord, V> FlatMap<K, V> {
     /// ```
     /// use flat_map::FlatMap;
     ///
-    /// let mut m = FlatMap::new(); 
+    /// let mut m = FlatMap::new();
     /// m.insert(1, "foo".to_string());
     /// m.get_mut(&1).unwrap().push_str("bar");
-    /// assert_eq!("foobar", m.get_mut(&1).unwrap()); 
+    /// assert_eq!("foobar", m.get_mut(&1).unwrap());
     /// ```
-	pub fn get_mut(&mut self, key: &K) -> Option<&mut V> {
-		match self.v[..].binary_search_by(|&(ref k, _)| { k.cmp(&key) }) {
-			Err(_) => None,
-			Ok(idx) => {
-				match self.v.get_mut(idx) {
-					 Some(&mut (_, ref mut v)) => Some(v),
-					 _ => None,
-				}
-			}
+    pub fn get_mut<Q: ?Sized>(&mut self, q: &Q) -> Option<&mut V>
+        where K: Borrow<Q>, Q: Ord
+    {
+	match self.v[..].binary_search_by(|&(ref k, _)| { k.borrow().cmp(&q) }) {
+	    Err(_) => None,
+	    Ok(idx) => {
+		match self.v.get_mut(idx) {
+		    Some(&mut (_, ref mut v)) => Some(v),
+		    _ => None,
 		}
+	    }
 	}
+    }
 
-    pub fn contains_key(&self, key: &K) -> bool {
-        self.get(key).is_some()
+    pub fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool
+        where K: Borrow<Q>, Q: Ord
+    {
+        self.get(k).is_some()
     }
 
     pub fn entry(&mut self, key: K) -> Entry<K, V> {
@@ -137,8 +144,10 @@ impl <K: Ord, V> FlatMap<K, V> {
         }
     }
 
-    pub fn remove(&mut self, key: &K) -> Option<V> {
-        match self.v[..].binary_search_by(|&(ref k, _)| { k.cmp(&key) }) {
+    pub fn remove<Q: ?Sized>(&mut self, q: &Q) -> Option<V>
+        where K: Borrow<Q>, Q: Ord
+    {
+        match self.v[..].binary_search_by(|&(ref k, _)| { k.borrow().cmp(&q) }) {
             Err(_) => None,
             Ok(i) => {
                 let (_, value) = self.v.remove(i);
