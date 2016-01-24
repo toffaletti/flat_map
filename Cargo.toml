@@ -1,7 +1,10 @@
 [package]
 name = "flat_map"
-version = "0.0.2"
-authors = ["Jason Toffaletti <toffaletti@gmail.com>"]
+version = "0.0.3"
+authors = [
+    "Jason Toffaletti <toffaletti@gmail.com>",
+    "Michael Dilger <mike@optcomp.nz>",
+]
 description = "A compact map stored as a vector of key, value pairs."
 license = "Apache-2.0"
 repository = "https://github.com/toffaletti/flat_map.git"
