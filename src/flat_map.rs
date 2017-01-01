@@ -462,8 +462,10 @@ impl<'a, K, V> ExactSizeIterator for Values<'a, K, V> {}
 
 impl<K: Ord, V> FromIterator<(K, V)> for FlatMap<K, V> {
     fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> FlatMap<K, V> {
-        let mut map = FlatMap::new();
-        map.extend(iter);
+        let iterator = iter.into_iter();
+        let (lower, _) = iterator.size_hint();
+        let mut map = FlatMap::with_capacity(lower);
+        map.extend(iterator);
         map
     }
 }
