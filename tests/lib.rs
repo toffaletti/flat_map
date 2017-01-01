@@ -4,6 +4,9 @@ use flat_map::FlatMap;
 use flat_map::Vacant;
 use flat_map::Occupied;
 
+use std::rc::Rc;
+use std::iter::FromIterator;
+
 #[test]
 fn it_works() {
     let mut m: FlatMap<i32, i32> = FlatMap::new();
@@ -79,38 +82,6 @@ fn borrow() {
     let mut m: FlatMap<String,String> = FlatMap::new();
     m.insert("Key".to_string(), "Value".to_string());
     assert_eq!(m.get("Key"), Some(&"Value".to_string()));
-}
-
-#[test]
-fn test_clone() {
-    let mut map = FlatMap::new();
-    let size = 100;
-    assert_eq!(map.len(), 0);
-
-    for i in 0..size {
-        assert_eq!(map.insert(i, 10*i), None);
-        assert_eq!(map.len(), i + 1);
-        assert_eq!(map, map.clone());
-    }
-
-    for i in 0..size {
-        assert_eq!(map.insert(i, 100*i), Some(10*i));
-        assert_eq!(map.len(), size);
-        assert_eq!(map, map.clone());
-    }
-
-    for i in 0..size/2 {
-        assert_eq!(map.remove(&(i*2)), Some(i*200));
-        assert_eq!(map.len(), size - i - 1);
-        assert_eq!(map, map.clone());
-    }
-
-    for i in 0..size/2 {
-        assert_eq!(map.remove(&(2*i)), None);
-        assert_eq!(map.remove(&(2*i+1)), Some(i*200 + 100));
-        assert_eq!(map.len(), size/2 - i - 1);
-        assert_eq!(map, map.clone());
-    }
 }
 
 #[test]
@@ -239,3 +210,314 @@ fn test_iter_mixed() {
     test(size, map.iter_mut().map(|(&k, &mut v)| (k, v)));
     test(size, map.into_iter());
 }
+
+#[test]
+fn test_borrow() {
+    // make sure these compile -- using the Borrow trait
+    {
+        let mut map = FlatMap::new();
+        map.insert("0".to_string(), 1);
+        assert_eq!(map["0"], 1);
+    }
+
+    {
+        let mut map = FlatMap::new();
+        map.insert(Box::new(0), 1);
+        assert_eq!(map[&0], 1);
+    }
+
+    {
+        let mut map = FlatMap::new();
+        map.insert(Box::new([0, 1]) as Box<[i32]>, 1);
+        assert_eq!(map[&[0, 1][..]], 1);
+    }
+
+    {
+        let mut map = FlatMap::new();
+        map.insert(Rc::new(0), 1);
+        assert_eq!(map[&0], 1);
+    }
+}
+
+#[test]
+fn test_entry() {
+    let xs = [(1, 10), (2, 20), (3, 30), (4, 40), (5, 50), (6, 60)];
+
+    let mut map: FlatMap<_, _> = xs.iter().cloned().collect();
+
+    // Existing key (insert)
+    match map.entry(1) {
+        Vacant(_) => unreachable!(),
+        Occupied(mut view) => {
+            assert_eq!(view.get(), &10);
+            assert_eq!(view.insert(100), 10);
+        }
+    }
+    assert_eq!(map.get(&1).unwrap(), &100);
+    assert_eq!(map.len(), 6);
+
+
+    // Existing key (update)
+    match map.entry(2) {
+        Vacant(_) => unreachable!(),
+        Occupied(mut view) => {
+            let v = view.get_mut();
+            *v *= 10;
+        }
+    }
+    assert_eq!(map.get(&2).unwrap(), &200);
+    assert_eq!(map.len(), 6);
+
+    // Existing key (take)
+    match map.entry(3) {
+        Vacant(_) => unreachable!(),
+        Occupied(view) => {
+            assert_eq!(view.remove(), 30);
+        }
+    }
+    assert_eq!(map.get(&3), None);
+    assert_eq!(map.len(), 5);
+
+
+    // Inexistent key (insert)
+    match map.entry(10) {
+        Occupied(_) => unreachable!(),
+        Vacant(view) => {
+            assert_eq!(*view.insert(1000), 1000);
+        }
+    }
+    assert_eq!(map.get(&10).unwrap(), &1000);
+    assert_eq!(map.len(), 6);
+}
+
+#[test]
+fn test_extend_ref() {
+    let mut a = FlatMap::new();
+    a.insert(1, "one");
+    let mut b = FlatMap::new();
+    b.insert(2, "two");
+    b.insert(3, "three");
+
+    a.extend(&b);
+
+    assert_eq!(a.len(), 3);
+    assert_eq!(a[&1], "one");
+    assert_eq!(a[&2], "two");
+    assert_eq!(a[&3], "three");
+}
+
+#[test]
+fn test_zst() {
+    let mut m = FlatMap::new();
+    assert_eq!(m.len(), 0);
+
+    assert_eq!(m.insert((), ()), None);
+    assert_eq!(m.len(), 1);
+
+    assert_eq!(m.insert((), ()), Some(()));
+    assert_eq!(m.len(), 1);
+    assert_eq!(m.iter().count(), 1);
+
+    m.clear();
+    assert_eq!(m.len(), 0);
+
+    for _ in 0..100 {
+        m.insert((), ());
+    }
+
+    assert_eq!(m.len(), 1);
+    assert_eq!(m.iter().count(), 1);
+}
+
+// This test's only purpose is to ensure that zero-sized keys with nonsensical orderings
+// do not cause segfaults when used with zero-sized values. All other map behavior is
+// undefined.
+#[test]
+fn test_bad_zst() {
+    use std::cmp::Ordering;
+
+    struct Bad;
+
+    impl PartialEq for Bad {
+        fn eq(&self, _: &Self) -> bool {
+            false
+        }
+    }
+
+    impl Eq for Bad {}
+
+    impl PartialOrd for Bad {
+        fn partial_cmp(&self, _: &Self) -> Option<Ordering> {
+            Some(Ordering::Less)
+        }
+    }
+
+    impl Ord for Bad {
+        fn cmp(&self, _: &Self) -> Ordering {
+            Ordering::Less
+        }
+    }
+
+    let mut m = FlatMap::new();
+
+    for _ in 0..100 {
+        m.insert(Bad, Bad);
+    }
+}
+
+#[test]
+fn test_clone() {
+    let mut map = FlatMap::new();
+    let size = 100;
+    assert_eq!(map.len(), 0);
+
+    for i in 0..size {
+        assert_eq!(map.insert(i, 10 * i), None);
+        assert_eq!(map.len(), i + 1);
+        assert_eq!(map, map.clone());
+    }
+
+    for i in 0..size {
+        assert_eq!(map.insert(i, 100 * i), Some(10 * i));
+        assert_eq!(map.len(), size);
+        assert_eq!(map, map.clone());
+    }
+
+    for i in 0..size / 2 {
+        assert_eq!(map.remove(&(i * 2)), Some(i * 200));
+        assert_eq!(map.len(), size - i - 1);
+        assert_eq!(map, map.clone());
+    }
+
+    for i in 0..size / 2 {
+        assert_eq!(map.remove(&(2 * i)), None);
+        assert_eq!(map.remove(&(2 * i + 1)), Some(i * 200 + 100));
+        assert_eq!(map.len(), size / 2 - i - 1);
+        assert_eq!(map, map.clone());
+    }
+}
+
+macro_rules! create_append_test {
+    ($name:ident, $len:expr) => {
+        #[test]
+        fn $name() {
+            let mut a = FlatMap::new();
+            for i in 0..8 {
+                a.insert(i, i);
+            }
+
+            let mut b = FlatMap::new();
+            for i in 5..$len {
+                b.insert(i, 2*i);
+            }
+
+            a.append(&mut b);
+
+            assert_eq!(a.len(), $len);
+            assert_eq!(b.len(), 0);
+
+            for i in 0..$len {
+                if i < 5 {
+                    assert_eq!(a[&i], i);
+                } else {
+                    assert_eq!(a[&i], 2*i);
+                }
+            }
+
+            assert_eq!(a.remove(&($len-1)), Some(2*($len-1)));
+            assert_eq!(a.insert($len-1, 20), None);
+        }
+    };
+}
+
+// These are mostly for testing the algorithm that "fixes" the right edge after insertion.
+// Single node.
+create_append_test!(test_append_9, 9);
+// Two leafs that don't need fixing.
+create_append_test!(test_append_17, 17);
+// Two leafs where the second one ends up underfull and needs stealing at the end.
+create_append_test!(test_append_14, 14);
+// Two leafs where the second one ends up empty because the insertion finished at the root.
+create_append_test!(test_append_12, 12);
+// Three levels; insertion finished at the root.
+create_append_test!(test_append_144, 144);
+// Three levels; insertion finished at leaf while there is an empty node on the second level.
+create_append_test!(test_append_145, 145);
+// Tests for several randomly chosen sizes.
+create_append_test!(test_append_170, 170);
+create_append_test!(test_append_181, 181);
+create_append_test!(test_append_239, 239);
+create_append_test!(test_append_1700, 1700);
+
+struct DeterministicRng {
+    x: u32,
+    y: u32,
+    z: u32,
+    w: u32,
+}
+
+impl DeterministicRng {
+    fn new() -> Self {
+        DeterministicRng {
+            x: 0x193a6754,
+            y: 0xa8a7d469,
+            z: 0x97830e05,
+            w: 0x113ba7bb,
+        }
+    }
+
+    fn next(&mut self) -> u32 {
+        let x = self.x;
+        let t = x ^ (x << 11);
+        self.x = self.y;
+        self.y = self.z;
+        self.z = self.w;
+        let w_ = self.w;
+        self.w = w_ ^ (w_ >> 19) ^ (t ^ (t >> 8));
+        self.w
+    }
+}
+
+fn rand_data(len: usize) -> Vec<(u32, u32)> {
+    let mut rng = DeterministicRng::new();
+    Vec::from_iter((0..len).map(|_| (rng.next(), rng.next())))
+}
+
+#[test]
+fn test_split_off_empty_right() {
+    let mut data = rand_data(173);
+
+    let mut map = FlatMap::from_iter(data.clone());
+    let right = map.split_off(&(data.iter().max().unwrap().0 + 1));
+
+    data.sort();
+    assert!(map.into_iter().eq(data));
+    assert!(right.into_iter().eq(None));
+}
+
+#[test]
+fn test_split_off_empty_left() {
+    let mut data = rand_data(314);
+
+    let mut map = FlatMap::from_iter(data.clone());
+    let right = map.split_off(&data.iter().min().unwrap().0);
+
+    data.sort();
+    assert!(map.into_iter().eq(None));
+    assert!(right.into_iter().eq(data));
+}
+
+#[test]
+fn test_split_off_large_random_sorted() {
+    let mut data = rand_data(1529);
+    // special case with maximum height.
+    data.sort();
+
+    let mut map = FlatMap::from_iter(data.clone());
+    let key = data[data.len() / 2].0;
+    let right = map.split_off(&key);
+
+    assert!(map.into_iter().eq(data.clone().into_iter().filter(|x| x.0 < key)));
+    assert!(right.into_iter().eq(data.into_iter().filter(|x| x.0 >= key)));
+}
+
