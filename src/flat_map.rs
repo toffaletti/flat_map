@@ -181,7 +181,7 @@ impl<K: Ord, V> FlatMap<K, V> {
         where K: Borrow<Q>,
               Q: Ord
     {
-        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(&q)) {
+        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(q)) {
             Err(_) => None,
             Ok(idx) => {
                 let (_, ref v) = self.v[idx];
@@ -213,7 +213,7 @@ impl<K: Ord, V> FlatMap<K, V> {
         where K: Borrow<Q>,
               Q: Ord
     {
-        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(&q)) {
+        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(q)) {
             Err(_) => None,
             Ok(idx) => {
                 match self.v.get_mut(idx) {
@@ -246,7 +246,7 @@ impl<K: Ord, V> FlatMap<K, V> {
         where K: Borrow<Q>,
               Q: Ord
     {
-        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(&q)) {
+        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(q)) {
             Err(_) => None,
             Ok(i) => {
                 let (_, value) = self.v.remove(i);
