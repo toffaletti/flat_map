@@ -1,11 +1,16 @@
+#[cfg(any(feature = "std_serde"))]
+extern crate serde;
+#[cfg(any(feature = "std_serde"))]
+extern crate serde_json;
+
 extern crate flat_map;
 
 use flat_map::FlatMap;
-use flat_map::Vacant;
 use flat_map::Occupied;
+use flat_map::Vacant;
+use std::iter::FromIterator;
 
 use std::rc::Rc;
-use std::iter::FromIterator;
 
 #[test]
 fn it_works() {
@@ -37,29 +42,29 @@ fn it_works() {
     m.insert(2, 2);
     assert_eq!(m.iter().count(), 3);
     {
-    	let mut it = m.iter();
-    	it.next();
-    	assert_eq!(it.count(), 2);
+        let mut it = m.iter();
+        it.next();
+        assert_eq!(it.count(), 2);
     }
     m.clear();
-    
-    
+
+
     m.insert(0, 0);
     m.insert(1, 1);
     m.insert(2, 2);
     assert_eq!(m.get_mut(&0), Some(&mut 0));
     assert_eq!(m.get_mut(&1), Some(&mut 1));
     assert_eq!(m.get_mut(&2), Some(&mut 2));
-    *m.get_mut(&0).unwrap() = *m.get_mut(&0).unwrap() +1;
-    *m.get_mut(&1).unwrap() = *m.get_mut(&1).unwrap() +1;
+    *m.get_mut(&0).unwrap() = *m.get_mut(&0).unwrap() + 1;
+    *m.get_mut(&1).unwrap() = *m.get_mut(&1).unwrap() + 1;
     *m.get_mut(&2).unwrap() = 3;
     {
         let it = m.iter();
         for (k, v) in it {
-            assert_eq!(k+1, *v);
+            assert_eq!(k + 1, *v);
         }
     }
-    
+
     let mut m = FlatMap::new();
     m.insert("1", "a");
     m.insert("2", "b");
@@ -67,19 +72,19 @@ fn it_works() {
     *m.get_mut(&"2").unwrap() = "2";
     assert_eq!("1".to_string(), m.get(&"1").unwrap().to_string());
     assert_eq!("2".to_string(), m.get(&"2").unwrap().to_string());
-   
-    let mut m = FlatMap::new(); 
+
+    let mut m = FlatMap::new();
     m.insert(1, "foo".to_string());
     m.insert(2, "ta".to_string());
-   	m.get_mut(&1).unwrap().push_str("bar");
-   	m.get_mut(&2).unwrap().push_str("da");
-	assert_eq!("foobar", m.get_mut(&1).unwrap());
-	assert_eq!("tada", m.get_mut(&2).unwrap()); 	
+    m.get_mut(&1).unwrap().push_str("bar");
+    m.get_mut(&2).unwrap().push_str("da");
+    assert_eq!("foobar", m.get_mut(&1).unwrap());
+    assert_eq!("tada", m.get_mut(&2).unwrap());
 }
 
 #[test]
 fn borrow() {
-    let mut m: FlatMap<String,String> = FlatMap::new();
+    let mut m: FlatMap<String, String> = FlatMap::new();
     m.insert("Key".to_string(), "Value".to_string());
     assert_eq!(m.get("Key"), Some(&"Value".to_string()));
 }
@@ -91,41 +96,41 @@ fn test_basic_large() {
     assert_eq!(map.len(), 0);
 
     for i in 0..size {
-        assert_eq!(map.insert(i, 10*i), None);
+        assert_eq!(map.insert(i, 10 * i), None);
         assert_eq!(map.len(), i + 1);
     }
 
     for i in 0..size {
-        assert_eq!(map.get(&i).unwrap(), &(i*10));
+        assert_eq!(map.get(&i).unwrap(), &(i * 10));
     }
 
-    for i in size..size*2 {
+    for i in size..size * 2 {
         assert_eq!(map.get(&i), None);
     }
 
     for i in 0..size {
-        assert_eq!(map.insert(i, 100*i), Some(10*i));
+        assert_eq!(map.insert(i, 100 * i), Some(10 * i));
         assert_eq!(map.len(), size);
     }
 
     for i in 0..size {
-        assert_eq!(map.get(&i).unwrap(), &(i*100));
+        assert_eq!(map.get(&i).unwrap(), &(i * 100));
     }
 
-    for i in 0..size/2 {
-        assert_eq!(map.remove(&(i*2)), Some(i*200));
+    for i in 0..size / 2 {
+        assert_eq!(map.remove(&(i * 2)), Some(i * 200));
         assert_eq!(map.len(), size - i - 1);
     }
 
-    for i in 0..size/2 {
-        assert_eq!(map.get(&(2*i)), None);
-        assert_eq!(map.get(&(2*i+1)).unwrap(), &(i*200 + 100));
+    for i in 0..size / 2 {
+        assert_eq!(map.get(&(2 * i)), None);
+        assert_eq!(map.get(&(2 * i + 1)).unwrap(), &(i * 200 + 100));
     }
 
-    for i in 0..size/2 {
-        assert_eq!(map.remove(&(2*i)), None);
-        assert_eq!(map.remove(&(2*i+1)), Some(i*200 + 100));
-        assert_eq!(map.len(), size/2 - i - 1);
+    for i in 0..size / 2 {
+        assert_eq!(map.remove(&(2 * i)), None);
+        assert_eq!(map.remove(&(2 * i + 1)), Some(i * 200 + 100));
+        assert_eq!(map.len(), size / 2 - i - 1);
     }
 }
 
@@ -152,7 +157,9 @@ fn test_iter() {
     // Forwards
     let mut map: FlatMap<_, _> = (0..size).map(|i| (i, i)).collect();
 
-    fn test<T>(size: usize, mut iter: T) where T: Iterator<Item=(usize, usize)> {
+    fn test<T>(size: usize, mut iter: T)
+        where T: Iterator<Item = (usize, usize)>
+    {
         for i in 0..size {
             assert_eq!(iter.size_hint(), (size - i, Some(size - i)));
             assert_eq!(iter.next().unwrap(), (i, i));
@@ -172,7 +179,9 @@ fn test_iter_rev() {
     // Forwards
     let mut map: FlatMap<_, _> = (0..size).map(|i| (i, i)).collect();
 
-    fn test<T>(size: usize, mut iter: T) where T: Iterator<Item=(usize, usize)> {
+    fn test<T>(size: usize, mut iter: T)
+        where T: Iterator<Item = (usize, usize)>
+    {
         for i in 0..size {
             assert_eq!(iter.size_hint(), (size - i, Some(size - i)));
             assert_eq!(iter.next().unwrap(), (size - i - 1, size - i - 1));
@@ -193,7 +202,8 @@ fn test_iter_mixed() {
     let mut map: FlatMap<_, _> = (0..size).map(|i| (i, i)).collect();
 
     fn test<T>(size: usize, mut iter: T)
-            where T: Iterator<Item=(usize, usize)> + DoubleEndedIterator {
+        where T: Iterator<Item = (usize, usize)> + DoubleEndedIterator
+    {
         for i in 0..size / 4 {
             assert_eq!(iter.size_hint(), (size - i * 2, Some(size - i * 2)));
             assert_eq!(iter.next().unwrap(), (i, i));
@@ -488,7 +498,10 @@ fn test_split_off_empty_right() {
     let mut data = rand_data(173);
 
     let mut map = FlatMap::from_iter(data.clone());
-    let right = map.split_off(&(data.iter().max().unwrap().0 + 1));
+    let right = map.split_off(&(data.iter()
+                                    .max()
+                                    .unwrap()
+                                    .0 + 1));
 
     data.sort();
     assert!(map.into_iter().eq(data));
@@ -500,7 +513,10 @@ fn test_split_off_empty_left() {
     let mut data = rand_data(314);
 
     let mut map = FlatMap::from_iter(data.clone());
-    let right = map.split_off(&data.iter().min().unwrap().0);
+    let right = map.split_off(&data.iter()
+                                   .min()
+                                   .unwrap()
+                                   .0);
 
     data.sort();
     assert!(map.into_iter().eq(None));
@@ -521,3 +537,14 @@ fn test_split_off_large_random_sorted() {
     assert!(right.into_iter().eq(data.into_iter().filter(|x| x.0 >= key)));
 }
 
+
+
+#[cfg(feature = "std_serde")]
+#[test]
+fn test_serde() {
+    let mut map = FlatMap::new();
+    map.insert(18, 18);
+    let json = serde_json::to_string(&map).unwrap();
+    let new_map: FlatMap<u64, u64> = serde_json::from_str(&json).unwrap();
+    assert_eq!(new_map.get(&18), map.get(&18));
+}

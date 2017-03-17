@@ -24,4 +24,12 @@ doctest = false
 [features]
 std = []
 default = ["std"]
+std_serde = ["std", "serde/std", "serde_derive"]
+no_std_serde = ["serde/collections", "serde_derive"]
 
+[dependencies]
+serde = { version = "0.9", default-features = false, optional = true }
+serde_derive = { version = "0.9", optional = true }
+
+[dev-dependencies]
+serde_json = { version = "0.9"}

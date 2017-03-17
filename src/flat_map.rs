@@ -17,7 +17,14 @@ use core::slice;
 #[cfg(feature = "std")]
 use std::vec;
 
+#[cfg(not(any(feature = "std_serde", feature = "no_std_serde")))]
 #[derive(Clone)]
+pub struct FlatMap<K, V> {
+    v: Vec<(K, V)>,
+}
+
+#[cfg(any(feature = "std_serde", feature = "no_std_serde"))]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct FlatMap<K, V> {
     v: Vec<(K, V)>,
 }
