@@ -1,14 +1,20 @@
 use self::Entry::*;
-use std::borrow::Borrow;
-use std::cmp::Ordering;
-use std::fmt;
-use std::fmt::Debug;
-use std::hash::{Hash, Hasher};
-use std::iter::{Map, FromIterator};
-use std::mem::swap;
-use std::ops::Index;
-use std::slice;
+#[cfg(not(feature = "std"))]
+use collections::Vec;
+#[cfg(not(feature = "std"))]
+use collections::vec;
+use core::borrow::Borrow;
+use core::cmp::Ordering;
+use core::fmt;
+use core::fmt::Debug;
+use core::hash::{Hash, Hasher};
+use core::iter::{Map, FromIterator};
+use core::mem::swap;
+use core::ops::Index;
+use core::slice;
 
+
+#[cfg(feature = "std")]
 use std::vec;
 
 #[derive(Clone)]

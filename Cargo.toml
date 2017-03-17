@@ -20,3 +20,8 @@ include = [
 [lib]
 name = "flat_map"
 doctest = false
+
+[features]
+std = []
+default = ["std"]
+
