@@ -1,20 +1,21 @@
 #![cfg_attr(not(feature = "std"), no_std)]
-#![cfg_attr(not(feature = "std"), feature(collections))]
+#![cfg_attr(not(feature = "std"), feature(alloc))]
 
-#[cfg(any(feature = "std_serde", feature = "no_std_serde"))]
+#[cfg(feature = "serde1")]
 extern crate serde;
 
-#[cfg(any(feature = "std_serde", feature = "no_std_serde"))]
+#[cfg(feature = "serde1")]
 #[macro_use]
 extern crate serde_derive;
 
 #[cfg(not(feature = "std"))]
 #[macro_use]
-extern crate collections;
+pub extern crate alloc;
 
-#[cfg(feature = "std")]
-mod core {
-    pub use std::{ops, hash, fmt, cmp, mem, slice, iter, borrow};
+#[cfg(not(feature = "std"))]
+mod std {
+    pub use core::{ops, hash, fmt, cmp, mem, slice, iter, borrow};
+    pub use alloc::*;
 }
 
 

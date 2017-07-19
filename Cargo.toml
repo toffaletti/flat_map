@@ -21,15 +21,14 @@ include = [
 name = "flat_map"
 doctest = false
 
+[dependencies]
+serde = { version = "1.0", default-features = false, optional = true }
+serde_derive = { version = "1.0", optional = true }
+
 [features]
 std = []
 default = ["std"]
-std_serde = ["std", "serde/std", "serde_derive"]
-no_std_serde = ["serde/collections", "serde_derive"]
-
-[dependencies]
-serde = { version = "0.9", default-features = false, optional = true }
-serde_derive = { version = "0.9", optional = true }
+serde1 = ["serde/alloc", "serde_derive"]
 
 [dev-dependencies]
-serde_json = { version = "0.9"}
+serde_json = { version = "1.0"}
