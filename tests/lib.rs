@@ -1,6 +1,6 @@
-#[cfg(any(feature = "std_serde"))]
+#[cfg(any(feature = "serde"))]
 extern crate serde;
-#[cfg(any(feature = "std_serde"))]
+#[cfg(any(feature = "serde"))]
 extern crate serde_json;
 
 extern crate flat_map;
@@ -539,7 +539,7 @@ fn test_split_off_large_random_sorted() {
 
 
 
-#[cfg(feature = "std_serde")]
+#[cfg(feature = "serde")]
 #[test]
 fn test_serde() {
     let mut map = FlatMap::new();
