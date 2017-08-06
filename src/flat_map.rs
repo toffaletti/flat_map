@@ -1,33 +1,41 @@
 use self::Entry::*;
-
 use std::vec;
-use std::slice;
-use std::cmp::Ordering;
-use std::fmt::Debug;
-use std::mem::swap;
+use std::vec::Vec;
 use std::borrow::Borrow;
+use std::cmp::Ordering;
+use std::fmt;
+use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 use std::iter::{Map, FromIterator};
-use std::fmt;
+use std::mem::swap;
 use std::ops::Index;
+use std::slice;
 
+
+#[cfg(not(feature = "serde1"))]
 #[derive(Clone)]
 pub struct FlatMap<K, V> {
     v: Vec<(K, V)>,
 }
 
-pub enum Entry<'a, K:'a, V:'a> {
+#[cfg(feature = "serde1")]
+#[derive(Clone, Serialize, Deserialize)]
+pub struct FlatMap<K, V> {
+    v: Vec<(K, V)>,
+}
+
+pub enum Entry<'a, K: 'a, V: 'a> {
     Vacant(VacantEntry<'a, K, V>),
     Occupied(OccupiedEntry<'a, K, V>),
 }
 
-pub struct VacantEntry<'a, K:'a, V:'a> {
+pub struct VacantEntry<'a, K: 'a, V: 'a> {
     v: &'a mut Vec<(K, V)>,
     key: K,
     index: usize,
 }
 
-pub struct OccupiedEntry<'a, K:'a, V:'a> {
+pub struct OccupiedEntry<'a, K: 'a, V: 'a> {
     v: &'a mut Vec<(K, V)>,
     index: usize,
 }
@@ -36,7 +44,7 @@ pub struct IntoIter<K, V> {
     inner: vec::IntoIter<(K, V)>,
 }
 
-pub struct IterMut<'a, K:'a, V:'a> {
+pub struct IterMut<'a, K: 'a, V: 'a> {
     inner: slice::IterMut<'a, (K, V)>,
 }
 
@@ -44,20 +52,22 @@ pub struct ValuesMut<'a, K: 'a, V: 'a> {
     inner: IterMut<'a, K, V>,
 }
 
-pub struct Iter<'a, K:'a, V:'a> {
+pub struct Iter<'a, K: 'a, V: 'a> {
     inner: slice::Iter<'a, (K, V)>,
 }
 
-pub struct Keys<'a, K:'a, V:'a> {
-    inner: Map<Iter<'a, K, V>, fn ((&'a K, &'a V)) -> &'a K>,
+pub struct Keys<'a, K: 'a, V: 'a> {
+    inner: Map<Iter<'a, K, V>, fn((&'a K, &'a V)) -> &'a K>,
 }
 
-pub struct Values<'a, K:'a, V:'a> {
-    inner: Map<Iter<'a, K, V>, fn ((&'a K, &'a V)) -> &'a V>,
+pub struct Values<'a, K: 'a, V: 'a> {
+    inner: Map<Iter<'a, K, V>, fn((&'a K, &'a V)) -> &'a V>,
 }
 
-impl <K, V> FlatMap<K, V> {
-    pub fn new() -> FlatMap<K, V> { FlatMap{ v: vec![] } }
+impl<K, V> FlatMap<K, V> {
+    pub fn new() -> FlatMap<K, V> {
+        FlatMap { v: vec![] }
+    }
 
     pub fn with_capacity(capacity: usize) -> FlatMap<K, V> {
         FlatMap { v: Vec::with_capacity(capacity) }
@@ -89,7 +99,9 @@ impl <K, V> FlatMap<K, V> {
         self.v.shrink_to_fit()
     }
 
-    pub fn len(&self) -> usize { self.v.len() }
+    pub fn len(&self) -> usize {
+        self.v.len()
+    }
 
     /// Return true if the map contains no elements.
     ///
@@ -103,25 +115,21 @@ impl <K, V> FlatMap<K, V> {
     /// a.insert("1", "a");
     /// assert!(!a.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.v.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.v.is_empty()
+    }
 
     pub fn iter<'r>(&'r self) -> Iter<'r, K, V> {
-        Iter {
-            inner: self.v.iter(),
-        }
+        Iter { inner: self.v.iter() }
     }
 
     pub fn iter_mut(&mut self) -> IterMut<K, V> {
-        IterMut {
-            inner: self.v.iter_mut(),
-        }
+        IterMut { inner: self.v.iter_mut() }
     }
 
-	pub fn values_mut(&mut self) -> ValuesMut<K, V> {
-        ValuesMut {
-            inner: self.iter_mut()
-        }
-	}
+    pub fn values_mut(&mut self) -> ValuesMut<K, V> {
+        ValuesMut { inner: self.iter_mut() }
+    }
 
     pub fn keys<'a>(&'a self) -> Keys<'a, K, V> {
         fn first<A, B>((a, _): (A, B)) -> A {
@@ -144,9 +152,9 @@ impl <K, V> FlatMap<K, V> {
     }
 }
 
-impl <K: Ord, V> FlatMap<K, V> {
+impl<K: Ord, V> FlatMap<K, V> {
     pub fn insert(&mut self, key: K, mut v: V) -> Option<V> {
-        match self.v[..].binary_search_by(|&(ref k, _)| { k.cmp(&key) }) {
+        match self.v[..].binary_search_by(|&(ref k, _)| k.cmp(&key)) {
             Err(i) => {
                 self.v.insert(i, (key, v));
                 None
@@ -166,23 +174,22 @@ impl <K: Ord, V> FlatMap<K, V> {
         }
     }
 
-	pub fn split_off(&mut self, key: &K) -> Self {
-        match self.v[..].binary_search_by(|&(ref k, _)| { k.cmp(key) }) {
-            Err(_) => {
-				Self::new()
-            }
+    pub fn split_off(&mut self, key: &K) -> Self {
+        match self.v[..].binary_search_by(|&(ref k, _)| k.cmp(key)) {
+            Err(_) => Self::new(),
             Ok(at) => {
-				let v = self.v.split_off(at);
-				FlatMap { v: v }
+                let v = self.v.split_off(at);
+                FlatMap { v: v }
             }
         }
 
-	}
+    }
 
     pub fn get<Q: ?Sized>(&self, q: &Q) -> Option<&V>
-        where K: Borrow<Q>, Q: Ord
+        where K: Borrow<Q>,
+              Q: Ord
     {
-        match self.v[..].binary_search_by(|&(ref k, _)| { k.borrow().cmp(&q) }) {
+        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(q)) {
             Err(_) => None,
             Ok(idx) => {
                 let (_, ref v) = self.v[idx];
@@ -192,7 +199,8 @@ impl <K: Ord, V> FlatMap<K, V> {
     }
 
     pub fn contains_key<Q: ?Sized>(&self, k: &Q) -> bool
-        where K: Borrow<Q>, Q: Ord
+        where K: Borrow<Q>,
+              Q: Ord
     {
         self.get(k).is_some()
     }
@@ -210,9 +218,10 @@ impl <K: Ord, V> FlatMap<K, V> {
     /// assert_eq!("foobar", m.get_mut(&1).unwrap());
     /// ```
     pub fn get_mut<Q: ?Sized>(&mut self, q: &Q) -> Option<&mut V>
-        where K: Borrow<Q>, Q: Ord
+        where K: Borrow<Q>,
+              Q: Ord
     {
-        match self.v[..].binary_search_by(|&(ref k, _)| { k.borrow().cmp(&q) }) {
+        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(q)) {
             Err(_) => None,
             Ok(idx) => {
                 match self.v.get_mut(idx) {
@@ -224,16 +233,28 @@ impl <K: Ord, V> FlatMap<K, V> {
     }
 
     pub fn entry(&mut self, key: K) -> Entry<K, V> {
-        match self.v[..].binary_search_by(|&(ref k, _)| { k.cmp(&key) }) {
-            Err(i) => Vacant(VacantEntry{v: &mut self.v, key: key, index: i}),
-            Ok(i) => Occupied(OccupiedEntry{v: &mut self.v, index: i}),
+        match self.v[..].binary_search_by(|&(ref k, _)| k.cmp(&key)) {
+            Err(i) => {
+                Vacant(VacantEntry {
+                           v: &mut self.v,
+                           key: key,
+                           index: i,
+                       })
+            }
+            Ok(i) => {
+                Occupied(OccupiedEntry {
+                             v: &mut self.v,
+                             index: i,
+                         })
+            }
         }
     }
 
     pub fn remove<Q: ?Sized>(&mut self, q: &Q) -> Option<V>
-        where K: Borrow<Q>, Q: Ord
+        where K: Borrow<Q>,
+              Q: Ord
     {
-        match self.v[..].binary_search_by(|&(ref k, _)| { k.borrow().cmp(&q) }) {
+        match self.v[..].binary_search_by(|&(ref k, _)| k.borrow().cmp(q)) {
             Err(_) => None,
             Ok(i) => {
                 let (_, value) = self.v.remove(i);
@@ -241,8 +262,6 @@ impl <K: Ord, V> FlatMap<K, V> {
             }
         }
     }
-
-
 }
 
 impl<'a, K: Ord, V> Entry<'a, K, V> {
@@ -308,7 +327,7 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
     fn next(&mut self) -> Option<(&'a K, &'a V)> {
         match self.inner.next() {
             Some(&(ref k, ref v)) => Some((k, v)),
-            None => None
+            None => None,
         }
     }
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -326,7 +345,7 @@ impl<'a, K, V> DoubleEndedIterator for Iter<'a, K, V> {
     fn next_back(&mut self) -> Option<(&'a K, &'a V)> {
         match self.inner.next_back() {
             Some(&(ref k, ref v)) => Some((k, v)),
-            None => None
+            None => None,
         }
     }
 }
@@ -339,7 +358,7 @@ impl<'a, K, V> Iterator for IterMut<'a, K, V> {
     fn next(&mut self) -> Option<(&'a K, &'a mut V)> {
         match self.inner.next() {
             Some(&mut (ref k, ref mut v)) => Some((k, v)),
-            None => None
+            None => None,
         }
     }
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -351,7 +370,7 @@ impl<'a, K, V> DoubleEndedIterator for IterMut<'a, K, V> {
     fn next_back(&mut self) -> Option<(&'a K, &'a mut V)> {
         match self.inner.next_back() {
             Some(&mut (ref k, ref mut v)) => Some((k, v)),
-            None => None
+            None => None,
         }
     }
 }
@@ -382,9 +401,7 @@ impl<K, V> IntoIterator for FlatMap<K, V> {
     type IntoIter = IntoIter<K, V>;
 
     fn into_iter(self) -> IntoIter<K, V> {
-        IntoIter{
-            inner: self.v.into_iter()
-        }
+        IntoIter { inner: self.v.into_iter() }
     }
 }
 
@@ -393,9 +410,7 @@ impl<'a, K, V> IntoIterator for &'a FlatMap<K, V> {
     type IntoIter = Iter<'a, K, V>;
 
     fn into_iter(self) -> Iter<'a, K, V> {
-        Iter{
-            inner: self.v.iter()
-        }
+        Iter { inner: self.v.iter() }
     }
 }
 
@@ -404,9 +419,7 @@ impl<'a, K, V> IntoIterator for &'a mut FlatMap<K, V> {
     type IntoIter = IterMut<'a, K, V>;
 
     fn into_iter(self) -> IterMut<'a, K, V> {
-        IterMut{
-            inner: self.v.iter_mut()
-        }
+        IterMut { inner: self.v.iter_mut() }
     }
 }
 
@@ -562,4 +575,3 @@ impl<'a, K, V> ExactSizeIterator for ValuesMut<'a, K, V> {
         self.inner.len()
     }
 }
-
