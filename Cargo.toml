@@ -1,9 +1,10 @@
 [package]
 name = "flat_map"
-version = "0.0.5"
+version = "0.0.6"
 authors = [
     "Jason Toffaletti <toffaletti@gmail.com>",
     "Michael Dilger <mike@optcomp.nz>",
+    "Pratyush Mishra <pratyush@berkeley.edu>",
 ]
 description = "A compact map stored as a vector of key, value pairs."
 license = "Apache-2.0"
@@ -32,3 +33,5 @@ serde1 = ["serde/alloc", "serde_derive"]
 
 [dev-dependencies]
 serde_json = { version = "1.0"}
+rand = { version = "0.3" }
+time = { version = "0.1"}
