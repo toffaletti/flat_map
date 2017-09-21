@@ -12,14 +12,9 @@ use std::ops::Index;
 use std::slice;
 
 
-#[cfg(not(feature = "serde1"))]
-#[derive(Clone)]
-pub struct FlatMap<K, V> {
-    v: Vec<(K, V)>,
-}
 
-#[cfg(feature = "serde1")]
-#[derive(Clone, Serialize, Deserialize)]
+#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
+#[derive(Clone)]
 pub struct FlatMap<K, V> {
     v: Vec<(K, V)>,
 }
@@ -65,6 +60,7 @@ pub struct Values<'a, K: 'a, V: 'a> {
 }
 
 impl<K, V> FlatMap<K, V> {
+
     pub fn new() -> FlatMap<K, V> {
         FlatMap { v: vec![] }
     }
@@ -262,6 +258,8 @@ impl<K: Ord, V> FlatMap<K, V> {
             }
         }
     }
+
+        
 }
 
 impl<'a, K: Ord, V> Entry<'a, K, V> {
@@ -281,7 +279,7 @@ impl<'a, K: Ord, V> Entry<'a, K, V> {
 }
 
 impl<'a, K: Ord, V> VacantEntry<'a, K, V> {
-    pub fn insert(mut self, value: V) -> &'a mut V {
+    pub fn insert(self, value: V) -> &'a mut V {
         self.v.insert(self.index, (self.key, value));
         let &mut (_, ref mut value) = &mut self.v[self.index];
         value
@@ -319,6 +317,8 @@ impl<'a, K: Ord, V> OccupiedEntry<'a, K, V> {
         let (_, value) = self.v.remove(self.index);
         value
     }
+
+    
 }
 
 impl<'a, K, V> Iterator for Iter<'a, K, V> {
@@ -475,16 +475,16 @@ impl<'a, K, V> ExactSizeIterator for Values<'a, K, V> {}
 
 impl<K: Ord, V> FromIterator<(K, V)> for FlatMap<K, V> {
     fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> FlatMap<K, V> {
-        let iterator = iter.into_iter();
-        let (lower, _) = iterator.size_hint();
-        let mut map = FlatMap::with_capacity(lower);
-        map.extend(iterator);
-        map
+        let mut vec: Vec<_> = iter.into_iter().collect();
+        vec.sort_by(|kv1, kv2| kv1.0.cmp(&kv2.0));
+        vec.dedup_by(|kv1, kv2| kv1.0 == kv2.0);
+        Self {
+            v: vec
+        }
     }
 }
 
 impl<K: Ord, V> Extend<(K, V)> for FlatMap<K, V> {
-    #[inline]
     fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
         for (k, v) in iter {
             self.insert(k, v);
@@ -513,7 +513,6 @@ impl<K: Ord, V> Default for FlatMap<K, V> {
 }
 
 impl<K: Ord, V: Ord> Ord for FlatMap<K, V> {
-    #[inline]
     fn cmp(&self, other: &FlatMap<K, V>) -> Ordering {
         self.iter().cmp(other.iter())
     }
@@ -528,7 +527,6 @@ impl<K: PartialEq, V: PartialEq> PartialEq for FlatMap<K, V> {
 impl<K: Eq, V: Eq> Eq for FlatMap<K, V> {}
 
 impl<K: PartialOrd, V: PartialOrd> PartialOrd for FlatMap<K, V> {
-    #[inline]
     fn partial_cmp(&self, other: &FlatMap<K, V>) -> Option<Ordering> {
         self.iter().partial_cmp(other.iter())
     }
@@ -546,7 +544,6 @@ impl<'a, K: Ord, Q: ?Sized, V> Index<&'a Q> for FlatMap<K, V>
 {
     type Output = V;
 
-    #[inline]
     fn index(&self, key: &Q) -> &V {
         self.get(key).expect("no entry found for key")
     }
