@@ -10,10 +10,6 @@ use std::iter::{Map, FromIterator};
 use std::mem::swap;
 use std::ops::Index;
 use std::slice;
-
-
-
-#[cfg_attr(feature = "serde1", derive(Serialize, Deserialize))]
 #[derive(Clone)]
 pub struct FlatMap<K, V> {
     v: Vec<(K, V)>,
@@ -570,5 +566,85 @@ impl<'a, K, V> DoubleEndedIterator for ValuesMut<'a, K, V> {
 impl<'a, K, V> ExactSizeIterator for ValuesMut<'a, K, V> {
     fn len(&self) -> usize {
         self.inner.len()
+    }
+}
+
+
+#[cfg(feature = "serde1")]
+mod serde_impl
+{
+    // the serde serialization/deserialization is manually handled to
+    // serialize the FlatMap as a classic map
+    // and not as a vector<K, V>
+    // this way the FlatMap is serialized in json as:
+    // { "k1": "v1", "k2": "v2" }
+    // and not
+    // {"v": [["k1", "v1"],["k2", "v2"]]}
+
+
+    use std::marker::PhantomData;
+    use serde::de::{Deserialize, Deserializer, Visitor, MapAccess};
+    use serde::{Serialize, Serializer};
+    use serde::ser::SerializeMap;
+    use super::FlatMap;
+    use std::fmt;
+
+    impl<K, V> Serialize for FlatMap<K, V>
+    where K: Ord + Serialize, V: Serialize {
+        fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+        where
+            S: Serializer,
+        {
+            let mut map = serializer.serialize_map(Some(self.len()))?;
+            for (k, v) in self {
+                map.serialize_entry(k, v)?;
+            }
+            map.end()
+        }
+    }
+
+
+    struct FlatMapVisitor<K, V> {
+        marker: PhantomData<fn() -> FlatMap<K, V>>
+    }
+
+    impl<K, V> FlatMapVisitor<K, V> {
+        fn new() -> Self {
+            FlatMapVisitor {
+                marker: PhantomData
+            }
+        }
+    }
+
+    impl<'de, K: Ord, V> Visitor<'de> for FlatMapVisitor<K, V>
+        where K: Deserialize<'de>,
+            V: Deserialize<'de>
+    {
+        type Value = FlatMap<K, V>;
+
+        fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+            formatter.write_str("a flat_map")
+        }
+
+        fn visit_map<M>(self, mut access: M) -> Result<Self::Value, M::Error>
+            where M: MapAccess<'de>
+        {
+            let mut map = FlatMap::with_capacity(access.size_hint().unwrap_or(0));
+            while let Some((key, value)) = access.next_entry()? {
+                map.insert(key, value);
+            }
+            Ok(map)
+        }
+    }
+
+    impl<'de, K: Ord, V> Deserialize<'de> for FlatMap<K, V>
+        where K: Deserialize<'de>,
+            V: Deserialize<'de>
+    {
+        fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+            where D: Deserializer<'de>
+        {
+            deserializer.deserialize_map(FlatMapVisitor::new())
+        }
     }
 }

@@ -4,10 +4,6 @@
 #[cfg(feature = "serde1")]
 extern crate serde;
 
-#[cfg(feature = "serde1")]
-#[macro_use]
-extern crate serde_derive;
-
 #[cfg(not(feature = "std"))]
 #[macro_use]
 pub extern crate alloc;
