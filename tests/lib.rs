@@ -537,8 +537,6 @@ fn test_split_off_large_random_sorted() {
     assert!(right.into_iter().eq(data.into_iter().filter(|x| x.0 >= key)));
 }
 
-
-
 #[cfg(feature = "serde")]
 #[test]
 fn test_serde() {
