@@ -142,6 +142,10 @@ impl<K, V> FlatMap<K, V> {
     pub fn clear(&mut self) {
         self.v.clear()
     }
+
+    pub fn into_inner(self) -> Vec<(K, V)> {
+        self.v
+    }
 }
 
 impl<K: Ord, V> FlatMap<K, V> {
@@ -255,7 +259,7 @@ impl<K: Ord, V> FlatMap<K, V> {
         }
     }
 
-        
+
 }
 
 impl<'a, K: Ord, V> Entry<'a, K, V> {
@@ -314,7 +318,7 @@ impl<'a, K: Ord, V> OccupiedEntry<'a, K, V> {
         value
     }
 
-    
+
 }
 
 impl<'a, K, V> Iterator for Iter<'a, K, V> {
