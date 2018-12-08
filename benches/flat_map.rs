@@ -1,5 +1,4 @@
 #![feature(test)]
-#![feature(i128_type)]
 
 extern crate flat_map;
 extern crate rand;
