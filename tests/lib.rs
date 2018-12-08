@@ -48,7 +48,6 @@ fn it_works() {
     }
     m.clear();
 
-
     m.insert(0, 0);
     m.insert(1, 1);
     m.insert(2, 2);
@@ -158,7 +157,8 @@ fn test_iter() {
     let mut map: FlatMap<_, _> = (0..size).map(|i| (i, i)).collect();
 
     fn test<T>(size: usize, mut iter: T)
-        where T: Iterator<Item = (usize, usize)>
+    where
+        T: Iterator<Item = (usize, usize)>,
     {
         for i in 0..size {
             assert_eq!(iter.size_hint(), (size - i, Some(size - i)));
@@ -180,7 +180,8 @@ fn test_iter_rev() {
     let mut map: FlatMap<_, _> = (0..size).map(|i| (i, i)).collect();
 
     fn test<T>(size: usize, mut iter: T)
-        where T: Iterator<Item = (usize, usize)>
+    where
+        T: Iterator<Item = (usize, usize)>,
     {
         for i in 0..size {
             assert_eq!(iter.size_hint(), (size - i, Some(size - i)));
@@ -202,7 +203,8 @@ fn test_iter_mixed() {
     let mut map: FlatMap<_, _> = (0..size).map(|i| (i, i)).collect();
 
     fn test<T>(size: usize, mut iter: T)
-        where T: Iterator<Item = (usize, usize)> + DoubleEndedIterator
+    where
+        T: Iterator<Item = (usize, usize)> + DoubleEndedIterator,
     {
         for i in 0..size / 4 {
             assert_eq!(iter.size_hint(), (size - i * 2, Some(size - i * 2)));
@@ -266,7 +268,6 @@ fn test_entry() {
     assert_eq!(map.get(&1).unwrap(), &100);
     assert_eq!(map.len(), 6);
 
-
     // Existing key (update)
     match map.entry(2) {
         Vacant(_) => unreachable!(),
@@ -287,7 +288,6 @@ fn test_entry() {
     }
     assert_eq!(map.get(&3), None);
     assert_eq!(map.len(), 5);
-
 
     // Inexistent key (insert)
     match map.entry(10) {
@@ -418,7 +418,7 @@ macro_rules! create_append_test {
 
             let mut b = FlatMap::new();
             for i in 5..$len {
-                b.insert(i, 2*i);
+                b.insert(i, 2 * i);
             }
 
             a.append(&mut b);
@@ -430,12 +430,12 @@ macro_rules! create_append_test {
                 if i < 5 {
                     assert_eq!(a[&i], i);
                 } else {
-                    assert_eq!(a[&i], 2*i);
+                    assert_eq!(a[&i], 2 * i);
                 }
             }
 
-            assert_eq!(a.remove(&($len-1)), Some(2*($len-1)));
-            assert_eq!(a.insert($len-1, 20), None);
+            assert_eq!(a.remove(&($len - 1)), Some(2 * ($len - 1)));
+            assert_eq!(a.insert($len - 1, 20), None);
         }
     };
 }
@@ -498,10 +498,7 @@ fn test_split_off_empty_right() {
     let mut data = rand_data(173);
 
     let mut map = FlatMap::from_iter(data.clone());
-    let right = map.split_off(&(data.iter()
-                                    .max()
-                                    .unwrap()
-                                    .0 + 1));
+    let right = map.split_off(&(data.iter().max().unwrap().0 + 1));
 
     data.sort();
     assert!(map.into_iter().eq(data));
@@ -513,10 +510,7 @@ fn test_split_off_empty_left() {
     let mut data = rand_data(314);
 
     let mut map = FlatMap::from_iter(data.clone());
-    let right = map.split_off(&data.iter()
-                                   .min()
-                                   .unwrap()
-                                   .0);
+    let right = map.split_off(&data.iter().min().unwrap().0);
 
     data.sort();
     assert!(map.into_iter().eq(None));
@@ -533,8 +527,12 @@ fn test_split_off_large_random_sorted() {
     let key = data[data.len() / 2].0;
     let right = map.split_off(&key);
 
-    assert!(map.into_iter().eq(data.clone().into_iter().filter(|x| x.0 < key)));
-    assert!(right.into_iter().eq(data.into_iter().filter(|x| x.0 >= key)));
+    assert!(map
+        .into_iter()
+        .eq(data.clone().into_iter().filter(|x| x.0 < key)));
+    assert!(right
+        .into_iter()
+        .eq(data.into_iter().filter(|x| x.0 >= key)));
 }
 
 #[cfg(feature = "serde")]
