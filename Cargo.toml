@@ -1,11 +1,12 @@
 [package]
 name = "flat_map"
-version = "0.0.7"
+version = "0.0.8"
 authors = [
     "Jason Toffaletti <toffaletti@gmail.com>",
     "Michael Dilger <mike@optcomp.nz>",
     "Pratyush Mishra <pratyush@berkeley.edu>",
     "Antoine Desbordes <antoine.desbordes@gmail.com>",
+    "Erich Gubler <erichdongubler@gmail.com>",
 ]
 description = "A compact map stored as a vector of key, value pairs."
 license = "Apache-2.0"
