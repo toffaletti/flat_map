@@ -10,10 +10,9 @@ pub extern crate alloc;
 
 #[cfg(not(feature = "std"))]
 mod std {
-    pub use core::{ops, hash, fmt, cmp, mem, slice, iter, borrow, marker};
     pub use alloc::*;
+    pub use core::{borrow, cmp, fmt, hash, iter, marker, mem, ops, slice};
 }
-
 
 pub mod flat_map;
 pub use flat_map::Entry::*;

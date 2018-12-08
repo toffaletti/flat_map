@@ -1,17 +1,16 @@
 #![feature(test)]
 #![feature(i128_type)]
 
+extern crate flat_map;
 extern crate rand;
 extern crate test;
-extern crate flat_map;
 
+use flat_map::FlatMap;
+use rand::distributions::{IndependentSample, Range};
+use rand::Rng;
 use std::collections::BTreeMap;
 use std::iter::FromIterator;
-use flat_map::FlatMap;
 use test::Bencher;
-use rand::Rng;
-use rand::distributions::{IndependentSample, Range};
-
 
 type Key = u64;
 type Value = u64;
@@ -19,15 +18,12 @@ type Value = u64;
 const NUM_KEYS: usize = 2 << 12;
 const NUM_VALUES: usize = 1 << 12;
 
-fn flat_map_setup() -> (
-    FlatMap<Key, Value>,
-    Vec<Key>,
-) {
+fn flat_map_setup() -> (FlatMap<Key, Value>, Vec<Key>) {
     let num_items = 1 << 25;
     let mut keys = Vec::new();
     let mut key_vals = Vec::with_capacity(num_items);
     let mut rng = rand::IsaacRng::new_unseeded();
-    for i in 0..NUM_KEYS*NUM_VALUES {
+    for i in 0..NUM_KEYS * NUM_VALUES {
         keys.push(i as Key);
         let value = rng.gen::<Value>();
         key_vals.push((i as Key, value))
@@ -36,15 +32,12 @@ fn flat_map_setup() -> (
     (map, keys)
 }
 
-fn btree_map_setup() -> (
-    BTreeMap<Key, Value>,
-    Vec<Key>,
-) {
+fn btree_map_setup() -> (BTreeMap<Key, Value>, Vec<Key>) {
     let num_items = 1 << 25;
     let mut keys = Vec::new();
     let mut key_vals = Vec::with_capacity(num_items);
     let mut rng = rand::IsaacRng::new_unseeded();
-    for i in 0..NUM_KEYS*NUM_VALUES {
+    for i in 0..NUM_KEYS * NUM_VALUES {
         keys.push(i as Key);
         let value = rng.gen::<Value>();
         key_vals.push((i as Value, value))
@@ -60,7 +53,7 @@ fn bench_flat_map_from_iter(b: &mut Bencher) {
     let mut keys = Vec::new();
     let mut key_vals = Vec::with_capacity(num_keys * num_values);
     let mut rng = rand::IsaacRng::new_unseeded();
-    for i in 0..num_keys*num_values {
+    for i in 0..num_keys * num_values {
         keys.push(i as Key);
         let value = rng.gen::<Value>();
         key_vals.push((i as Key, value))
@@ -100,7 +93,7 @@ fn bench_btree_map_from_iter(b: &mut Bencher) {
     let mut keys = Vec::new();
     let mut key_vals = Vec::with_capacity(num_keys * num_values);
     let mut rng = rand::IsaacRng::new_unseeded();
-    for i in 0..num_keys*num_values {
+    for i in 0..num_keys * num_values {
         keys.push(i as Key);
         let value = rng.gen::<Value>();
         key_vals.push((i as Key, value))
