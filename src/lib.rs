@@ -15,5 +15,5 @@ mod std {
 }
 
 pub mod flat_map;
-pub use flat_map::Entry::*;
-pub use flat_map::FlatMap;
+pub use crate::flat_map::Entry::*;
+pub use crate::flat_map::FlatMap;
