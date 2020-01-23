@@ -158,6 +158,12 @@ impl<K, V> FlatMap<K, V> {
     pub fn into_inner(self) -> Vec<(K, V)> {
         self.v
     }
+
+    pub fn retain<F>(&mut self, mut f: F)
+    where F: FnMut(&K, &V) -> bool
+    {
+        self.v.retain(|(v, k)| f(v, k))
+    }
 }
 
 impl<K: Ord, V> FlatMap<K, V> {

@@ -407,6 +407,27 @@ fn test_clone() {
     }
 }
 
+#[test]
+fn test_retain() {
+    let mut map = FlatMap::new();
+
+    map.insert("a", 1);
+    map.insert("b", 2);
+    map.insert("c", 3);
+    map.insert("d", 4);
+    map.insert("e", 5);
+
+    assert_eq!(map.len(), 5);
+    map.retain(|_, y| y % 2 == 0);
+    assert_eq!(map.len(), 2);
+
+    map.insert("e", 5);
+
+    assert_eq!(map.len(), 3);
+    map.retain(|x, _| *x == "d");
+    assert_eq!(map.len(), 1);
+}
+
 macro_rules! create_append_test {
     ($name:ident, $len:expr) => {
         #[test]
