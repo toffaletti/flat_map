@@ -7,6 +7,7 @@ authors = [
     "Pratyush Mishra <pratyush@berkeley.edu>",
     "Antoine Desbordes <antoine.desbordes@gmail.com>",
     "Erich Gubler <erichdongubler@gmail.com>",
+    "Guillaume Gomez <guillaume1.gomez@gmail.com>",
 ]
 description = "A compact map stored as a vector of key, value pairs."
 license = "Apache-2.0"
