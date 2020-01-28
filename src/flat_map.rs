@@ -453,7 +453,7 @@ impl<'a, K, V> Clone for Keys<'a, K, V> {
 impl<'a, K, V> Iterator for Keys<'a, K, V> {
     type Item = &'a K;
 
-    fn next(&mut self) -> Option<(&'a K)> {
+    fn next(&mut self) -> Option<&'a K> {
         self.inner.next()
     }
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -462,7 +462,7 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
 }
 
 impl<'a, K, V> DoubleEndedIterator for Keys<'a, K, V> {
-    fn next_back(&mut self) -> Option<(&'a K)> {
+    fn next_back(&mut self) -> Option<&'a K> {
         self.inner.next_back()
     }
 }
@@ -480,7 +480,7 @@ impl<'a, K, V> Clone for Values<'a, K, V> {
 impl<'a, K, V> Iterator for Values<'a, K, V> {
     type Item = &'a V;
 
-    fn next(&mut self) -> Option<(&'a V)> {
+    fn next(&mut self) -> Option<&'a V> {
         self.inner.next()
     }
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -489,7 +489,7 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
 }
 
 impl<'a, K, V> DoubleEndedIterator for Values<'a, K, V> {
-    fn next_back(&mut self) -> Option<(&'a V)> {
+    fn next_back(&mut self) -> Option<&'a V> {
         self.inner.next_back()
     }
 }
