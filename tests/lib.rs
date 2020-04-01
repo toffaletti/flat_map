@@ -428,6 +428,18 @@ fn test_retain() {
     assert_eq!(map.len(), 1);
 }
 
+#[test]
+fn test_index(){
+    let mut map = FlatMap::new();
+
+    map.insert("a", 1);
+    assert_eq!(map[&"a"], 1);
+
+    map[&"a"] = 2;
+    assert_eq!(map[&"a"], 2);
+
+}
+
 macro_rules! create_append_test {
     ($name:ident, $len:expr) => {
         #[test]
