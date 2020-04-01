@@ -1,12 +1,12 @@
 use self::Entry::*;
-use std::borrow::Borrow;
+use std::borrow::{Borrow, BorrowMut};
 use std::cmp::Ordering;
 use std::fmt;
 use std::fmt::Debug;
 use std::hash::{Hash, Hasher};
 use std::iter::{FromIterator, Map};
 use std::mem::swap;
-use std::ops::Index;
+use std::ops::{Index, IndexMut};
 use std::slice;
 use std::vec;
 use std::vec::Vec;
@@ -562,6 +562,18 @@ where
 
     fn index(&self, key: &Q) -> &V {
         self.get(key).expect("no entry found for key")
+    }
+}
+
+impl<'a, K: Ord, Q: ?Sized, V> IndexMut<&'a Q> for FlatMap<K, V>
+where
+    K: BorrowMut<Q>,
+    Q: Ord,
+{
+    // type Output = &V;
+
+    fn index_mut(&mut self, key: &Q) -> &mut V {
+        self.get_mut(key).expect("no entry found for key")
     }
 }
 

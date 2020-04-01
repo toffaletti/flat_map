@@ -1,6 +1,6 @@
 [package]
 name = "flat_map"
-version = "0.0.9"
+version = "0.0.10"
 authors = [
     "Jason Toffaletti <toffaletti@gmail.com>",
     "Michael Dilger <mike@optcomp.nz>",
